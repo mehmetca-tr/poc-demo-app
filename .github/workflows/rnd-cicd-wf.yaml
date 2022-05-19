@@ -50,8 +50,8 @@ jobs:
     
     - name: "Build and push to container registry"
       run: |
-        docker build . -t ${{ secrets.ACR_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha::8 }}
-        docker push ${{ secrets.ACR_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha::8 }}
+        docker build . -t ${{ secrets.ACR_URL }}/${{ env.IMAGE_NAME }}:${ github.sha::8 }
+        docker push ${{ secrets.ACR_URL }}/${{ env.IMAGE_NAME }}:${ github.sha::8 }
         
   CD:
     needs: [build]
@@ -61,7 +61,7 @@ jobs:
       RESOURCE_GROUP: ${{ github.event.inputs.ResourceGroup }}
       NAMESPACE: ${{ github.event.inputs.Namespace }}
       IMAGE_NAME: $(echo '${{ github.repository }}' | awk -F '/' '{print $2}')
-      IMAGE_TAG: ${{ github.sha::8 }}
+      IMAGE_TAG: ${ github.sha::8 }
       VALUES_FILE: ${{ github.event.inputs.ValuesFile }}
 
     secrets:
