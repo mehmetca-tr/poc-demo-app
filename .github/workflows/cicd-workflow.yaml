@@ -48,7 +48,7 @@ jobs:
         
   CD:
     needs: [build]
-    uses: mehmetca-tr/poc-demo-app/.github/workflows/rnd-cd-wf.yaml@main
+    uses: mehmetca-tr/poc-demo-app/.github/workflows/cd-workflow.yaml@main
     with:
       CLUSTER_NAME: ${{ github.event.inputs.ClusterName }}
       RESOURCE_GROUP: ${{ github.event.inputs.ResourceGroup }}
