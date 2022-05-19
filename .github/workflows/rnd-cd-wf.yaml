@@ -78,7 +78,7 @@ jobs:
             --namespace ${{ inputs.NAMESPACE }} \
             ${{ env.IMAGE_NAME }} \
             ./charts/ \
-            -f ${{ inputs.VALUES_FILE }} \
+            -f values.yaml \
             --set image.tag=${{ inputs.IMAGE_TAG }}
 
     - name: Helm Package
