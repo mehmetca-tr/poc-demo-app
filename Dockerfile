@@ -1,11 +1,11 @@
 FROM ubuntu
 
-#RUN apt-get update
-RUN apt-get update && apt-get install -y --no-install-recommends apt-utils
+RUN apt-get update
+#RUN apt-get update && apt-get install -y --no-install-recommends apt-utils
 
 RUN apt-get install nginx -y
 
-COPY app/index.html /var/www/html/
+COPY src/index.html /var/www/html/
 
 EXPOSE 80
 
