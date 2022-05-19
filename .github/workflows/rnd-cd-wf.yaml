@@ -12,9 +12,6 @@ on:
       NAMESPACE:
         required: true
         type: string
-      # IMAGE_NAME:
-      #   required: true
-      #   type: string
       IMAGE_TAG:
         required: true
         type: string
@@ -84,9 +81,11 @@ jobs:
     - name: Helm Package
       run: |
         helm package \
-            --app-version ${{ inputs.IMAGE_TAG }} \
-            --version ${{ inputs.IMAGE_TAG }} \
+            --app-version 3.2.1 \
+            --version 1.2.3 \
             ./main/charts/
+      
+      ### Versions should be fixed
 
     - name: Authenticate with the registry
       run: |

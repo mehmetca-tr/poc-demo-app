@@ -15,10 +15,6 @@ on:
         description: 'Namespace:'
         default: default
         required: true
-      # ImageName:
-      #   description: 'Image Name:'
-      #   default: index-app
-      #   required: true
       ImageTag:
         description: 'Image Tag:'
         default: 1.2.3-sha-dev-stable
@@ -27,9 +23,6 @@ on:
         description: 'Specify Values as a YAML file:'
         default: values.yaml
         required: true
-        
-# env:
-#   IMAGE_NAME: ${{ github.event.inputs.ImageName }}
 
 jobs:
   build:
@@ -60,7 +53,6 @@ jobs:
       CLUSTER_NAME: ${{ github.event.inputs.ClusterName }}
       RESOURCE_GROUP: ${{ github.event.inputs.ResourceGroup }}
       NAMESPACE: ${{ github.event.inputs.Namespace }}
-      #IMAGE_NAME: $(echo '${{ github.repository }}' | awk -F '/' '{print $2}')
       IMAGE_TAG: ${{ github.sha }}
       VALUES_FILE: ${{ github.event.inputs.ValuesFile }}
 
