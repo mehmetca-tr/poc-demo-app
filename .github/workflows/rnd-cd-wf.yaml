@@ -139,8 +139,11 @@ jobs:
         login-server: ${{ secrets.ACR_URL }}
         username: ${{ secrets.ACR_USERNAME }}
         password: ${{ secrets.ACR_PASSWORD }}
-    
-    ### Image tag should also get from params as an input from dev 
+
+    - name: "Create IMAGE_NAME environment variable"
+      run: echo "IMAGE_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
+      shell: bash
+     
     - name: "Tag and push to container registry"
       run: |
         docker pull ${{ secrets.ACR_URL }}/${{ env.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }}
