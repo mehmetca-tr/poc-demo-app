@@ -60,7 +60,7 @@ jobs:
       CLUSTER_NAME: ${{ github.event.inputs.ClusterName }}
       RESOURCE_GROUP: ${{ github.event.inputs.ResourceGroup }}
       NAMESPACE: ${{ github.event.inputs.Namespace }}
-      IMAGE_NAME: $(echo '${{ github.repository }}' | awk -F '/' '{print $2}')
+      #IMAGE_NAME: $(echo '${{ github.repository }}' | awk -F '/' '{print $2}')
       IMAGE_TAG: ${{ github.sha }}
       VALUES_FILE: ${{ github.event.inputs.ValuesFile }}
 

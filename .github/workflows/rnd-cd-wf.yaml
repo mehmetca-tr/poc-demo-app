@@ -12,9 +12,9 @@ on:
       NAMESPACE:
         required: true
         type: string
-      IMAGE_NAME:
-        required: true
-        type: string
+      # IMAGE_NAME:
+      #   required: true
+      #   type: string
       IMAGE_TAG:
         required: true
         type: string
@@ -58,6 +58,10 @@ jobs:
       run: cp -rp central-helm-chart/templates ./charts
       shell: bash
 
+    - name: "Create IMAGE_NAME environment variable"
+      run: echo "IMAGE_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
+      shell: bash
+
     ### HELM COMMANDS
 
     - name: Install Helm
@@ -72,7 +76,7 @@ jobs:
             --install \
             --create-namespace \
             --namespace ${{ inputs.NAMESPACE }} \
-            ${{ inputs.IMAGE_NAME }} \
+            ${{ env.IMAGE_NAME }} \
             ./charts/ \
             -f ./charts/${{ inputs.VALUES_FILE }} \
             --set image.tag=${{ inputs.IMAGE_TAG }}
@@ -94,7 +98,7 @@ jobs:
     - name: Push chart to registry as OCI artifact
       run: |
         helm push \
-        ${{ inputs.IMAGE_NAME }}-${{ inputs.IMAGE_TAG }}.tgz \
+        ${{ env.IMAGE_NAME }}-${{ inputs.IMAGE_TAG }}.tgz \
         oci://${{ secrets.ACR_URL }}/helm
 
     - name: Install / Upgrade helm chart
@@ -105,8 +109,8 @@ jobs:
             --namespace ${{ inputs.NAMESPACE }} \
             --timeout 300s \
             --wait \
-            ${{ inputs.IMAGE_NAME }} \
-            oci://${{ secrets.ACR_URL }}/helm/${{ inputs.IMAGE_NAME }} --version ${{ inputs.IMAGE_TAG }} \
+            ${{ env.IMAGE_NAME }} \
+            oci://${{ secrets.ACR_URL }}/helm/${{ env.IMAGE_NAME }} --version ${{ inputs.IMAGE_TAG }} \
             -f ./charts/${{ inputs.VALUES_FILE }} \
             --set image.tag=${{ inputs.IMAGE_TAG }}
 
@@ -140,7 +144,7 @@ jobs:
     ### Image tag should also get from params as an input from dev 
     - name: "Tag and push to container registry"
       run: |
-        docker pull ${{ secrets.ACR_URL }}/${{ inputs.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }}
-        docker tag ${{ secrets.ACR_URL }}/${{ inputs.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }} ${{ secrets.ACR_URL }}/${{ inputs.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }}-stable
-        docker push ${{ secrets.ACR_URL }}/${{ inputs.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }}-stable
+        docker pull ${{ secrets.ACR_URL }}/${{ env.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }}
+        docker tag ${{ secrets.ACR_URL }}/${{ env.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }} ${{ secrets.ACR_URL }}/${{ env.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }}-stable
+        docker push ${{ secrets.ACR_URL }}/${{ env.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }}-stable
         echo "Pushed with a < STABLE > tag"
