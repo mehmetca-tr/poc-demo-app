@@ -1,0 +1,146 @@
+name: RnD-CD-WF
+
+on:
+  workflow_call:
+    inputs:
+      CLUSTER_NAME:
+        required: true
+        type: string
+      RESOURCE_GROUP:
+        required: true
+        type: string
+      NAMESPACE:
+        required: true
+        type: string
+      IMAGE_NAME:
+        required: true
+        type: string
+      IMAGE_TAG:
+        required: true
+        type: string
+      VALUES_FILE:
+        required: true
+        type: string
+    
+    secrets:
+      ACR_URL:
+        required: true
+      ACR_USERNAME:
+        required: true
+      ACR_PASSWORD:
+        required: true
+      AZURE_CREDENTIALS:
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: "Checkout service repository"
+      uses: actions/checkout@v3
+      with:
+        path: main
+
+    - name: "Checkout central-helm-chart repository"
+      uses: actions/checkout@v3
+      with:
+        repository: mehmetca-tr/central-helm-chart
+        path: central-helm-chart
+
+    - name: "Set the target AKS cluster"
+      uses: Azure/aks-set-context@v1
+      with:
+        creds: '${{ secrets.AZURE_CREDENTIALS }}'
+        cluster-name: ${{ inputs.CLUSTER_NAME }}
+        resource-group: ${{ inputs.RESOURCE_GROUP }}
+    
+    - name: Copy from central helm templates to service level charts folder
+      run: cp -rp central-helm-chart/templates ./charts
+      shell: bash
+
+    ### HELM COMMANDS
+
+    - name: Install Helm
+      uses: Azure/setup-helm@v1
+      with:
+        version: v3.8.0
+
+    - name: Helm Dry Run
+      run: |
+        helm upgrade \
+            --dry-run \
+            --install \
+            --create-namespace \
+            --namespace ${{ inputs.NAMESPACE }} \
+            ${{ inputs.IMAGE_NAME }} \
+            ./charts/ \
+            -f ./charts/${{ inputs.VALUES_FILE }} \
+            --set image.tag=${{ inputs.IMAGE_TAG }}
+
+    - name: Helm Package
+      run: |
+        helm package \
+            --app-version ${{ inputs.IMAGE_TAG }} \
+            --version ${{ inputs.IMAGE_TAG }} \
+            ./charts/
+
+    - name: Authenticate with the registry
+      run: |
+        helm registry login \
+            ${{ secrets.ACR_URL }} \
+            --username ${{ secrets.ACR_USERNAME }} \
+            --password ${{ secrets.ACR_PASSWORD }}
+
+    - name: Push chart to registry as OCI artifact
+      run: |
+        helm push \
+        ${{ inputs.IMAGE_NAME }}-${{ inputs.IMAGE_TAG }}.tgz \
+        oci://${{ secrets.ACR_URL }}/helm
+
+    - name: Install / Upgrade helm chart
+      run: |
+        helm upgrade \
+            --install \
+            --create-namespace \
+            --namespace ${{ inputs.NAMESPACE }} \
+            --timeout 300s \
+            --wait \
+            ${{ inputs.IMAGE_NAME }} \
+            oci://${{ secrets.ACR_URL }}/helm/${{ inputs.IMAGE_NAME }} --version ${{ inputs.IMAGE_TAG }} \
+            -f ./charts/${{ inputs.VALUES_FILE }} \
+            --set image.tag=${{ inputs.IMAGE_TAG }}
+
+    # --- PreProd Tests ---
+  test:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    steps:
+    - name: "PreProd Test Steps"
+      run: echo "---- PreProd Tests ----"
+
+    # --- Image Promotion ---
+  image-promotion:
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+    - name: "PreProd Image Promotion Step"
+      run: echo "---- PreProd Image Promotion ----"
+
+    - name: "Checkout service repository"
+      uses: actions/checkout@v3
+      with:
+        path: main
+
+    - uses: Azure/docker-login@v1
+      with:
+        login-server: ${{ secrets.ACR_URL }}
+        username: ${{ secrets.ACR_USERNAME }}
+        password: ${{ secrets.ACR_PASSWORD }}
+    
+    ### Image tag should also get from params as an input from dev 
+    - name: "Tag and push to container registry"
+      run: |
+        docker pull ${{ secrets.ACR_URL }}/${{ inputs.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }}
+        docker tag ${{ secrets.ACR_URL }}/${{ inputs.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }} ${{ secrets.ACR_URL }}/${{ inputs.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }}-stable
+        docker push ${{ secrets.ACR_URL }}/${{ inputs.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }}-stable
+        echo "Pushed with a < STABLE > tag"
