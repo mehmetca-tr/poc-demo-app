@@ -1,0 +1,76 @@
+name: "RnD-CI-CD-WF"
+
+on:
+  workflow_dispatch:
+    inputs:
+      ClusterName:
+        description: 'Cluster Name:'
+        default: contoso-video
+        required: true
+      ResourceGroup:
+        description: 'Resource Group Name:'
+        default: mslearn-gh-pipelines-5163
+        required: true
+      Namespace:
+        description: 'Namespace:'
+        default: default
+        required: true
+      # ImageName:
+      #   description: 'Image Name:'
+      #   default: index-app
+      #   required: true
+      ImageTag:
+        description: 'Image Tag:'
+        default: 1.2.3-sha-dev-stable
+        required: false
+      ValuesFile:
+        description: 'Specify Values as a YAML file:'
+        default: values.yaml
+        required: true
+        
+# env:
+#   IMAGE_NAME: ${{ github.event.inputs.ImageName }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: "Checkout repository"
+      uses: actions/checkout@master
+    
+    - uses: Azure/docker-login@v1
+      with:
+        login-server: ${{ secrets.ACR_URL }}
+        username: ${{ secrets.ACR_USERNAME }}
+        password: ${{ secrets.ACR_PASSWORD }}
+
+    - name: "Create IMAGE_NAME environment variable"
+      run: echo "IMAGE_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
+      shell: bash
+    
+    - name: "Build and push to container registry"
+      run: |
+        docker build . -t ${{ secrets.ACR_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha::8 }}
+        docker push ${{ secrets.ACR_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha::8 }}
+        
+  CD:
+    needs: [build]
+
+    - name: "Create IMAGE_NAME environment variable"
+      run: echo "IMAGE_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
+      shell: bash
+
+    - uses: mehmetca-tr/poc-demo-app/.github/workflows/rnd-cd-wf.yml@main
+      with:
+        CLUSTER_NAME: ${{ github.event.inputs.ClusterName }}
+        RESOURCE_GROUP: ${{ github.event.inputs.ResourceGroup }}
+        NAMESPACE: ${{ github.event.inputs.Namespace }}
+        IMAGE_NAME: ${{ env.IMAGE_NAME }}
+        IMAGE_TAG: ${{ github.sha::8 }}
+        VALUES_FILE: ${{ github.event.inputs.ValuesFile }}
+
+      secrets:
+        ACR_URL: ${{ secrets.ACR_URL }}
+        ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
+        ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
