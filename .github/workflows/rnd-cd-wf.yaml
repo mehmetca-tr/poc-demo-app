@@ -78,7 +78,7 @@ jobs:
             --namespace ${{ inputs.NAMESPACE }} \
             ${{ env.IMAGE_NAME }} \
             ./charts/ \
-            -f ./charts/${{ inputs.VALUES_FILE }} \
+            -f ${{ inputs.VALUES_FILE }} \
             --set image.tag=${{ inputs.IMAGE_TAG }}
 
     - name: Helm Package
@@ -111,7 +111,7 @@ jobs:
             --wait \
             ${{ env.IMAGE_NAME }} \
             oci://${{ secrets.ACR_URL }}/helm/${{ env.IMAGE_NAME }} --version ${{ inputs.IMAGE_TAG }} \
-            -f ./charts/${{ inputs.VALUES_FILE }} \
+            -f ${{ inputs.VALUES_FILE }} \
             --set image.tag=${{ inputs.IMAGE_TAG }}
 
     # --- PreProd Tests ---
