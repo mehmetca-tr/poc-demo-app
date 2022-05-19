@@ -72,6 +72,9 @@ jobs:
     - name: Helm Dry Run
       run: |
         ls -la
+        ls -la central-helm-chart
+        ls -la charts
+        ls -la main
         helm upgrade \
             --dry-run \
             --install \
