@@ -71,6 +71,7 @@ jobs:
 
     - name: Helm Dry Run
       run: |
+        ls -la
         helm upgrade \
             --dry-run \
             --install \
@@ -78,7 +79,7 @@ jobs:
             --namespace ${{ inputs.NAMESPACE }} \
             ${{ env.IMAGE_NAME }} \
             ./charts/ \
-            -f values.yaml \
+            --values values.yaml \
             --set image.tag=${{ inputs.IMAGE_TAG }}
 
     - name: Helm Package
