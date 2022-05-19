@@ -1,0 +1,6 @@
+image:
+  repository: contosocontainerregistry5320.azurecr.io
+  name: poc-demo-app
+  tag: <image-tag>
+
+namespace: default
