@@ -150,3 +150,8 @@ jobs:
         docker tag ${{ secrets.ACR_URL }}/${{ env.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }} ${{ secrets.ACR_URL }}/${{ env.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }}-stable
         docker push ${{ secrets.ACR_URL }}/${{ env.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }}-stable
         echo "Pushed with a < STABLE > tag"
+
+    
+    ### Notes
+    # dev-stable image tag should be checked before deployment
+    # versioning for image and helm package should be integrated with ci part
