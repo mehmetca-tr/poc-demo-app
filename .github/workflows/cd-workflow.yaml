@@ -1,4 +1,4 @@
-name: RnD-CD-WF
+name: CD-Workflow
 
 on:
   workflow_call:
