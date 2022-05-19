@@ -55,7 +55,7 @@ jobs:
         resource-group: ${{ inputs.RESOURCE_GROUP }}
     
     - name: Copy from central helm templates to service level charts folder
-      run: cp -rp central-helm-chart/templates ./charts
+      run: cp -rp central-helm-chart/templates ./main/charts
       shell: bash
 
     - name: "Create IMAGE_NAME environment variable"
@@ -71,18 +71,14 @@ jobs:
 
     - name: Helm Dry Run
       run: |
-        ls -la
-        ls -la central-helm-chart
-        ls -la charts
-        ls -la main
         helm upgrade \
             --dry-run \
             --install \
             --create-namespace \
             --namespace ${{ inputs.NAMESPACE }} \
             ${{ env.IMAGE_NAME }} \
-            ./charts/ \
-            --values values.yaml \
+            ./main/charts/ \
+            -f ./main/charts/${{ inputs.VALUES_FILE }} \
             --set image.tag=${{ inputs.IMAGE_TAG }}
 
     - name: Helm Package
@@ -90,7 +86,7 @@ jobs:
         helm package \
             --app-version ${{ inputs.IMAGE_TAG }} \
             --version ${{ inputs.IMAGE_TAG }} \
-            ./charts/
+            ./main/charts/
 
     - name: Authenticate with the registry
       run: |
@@ -115,7 +111,7 @@ jobs:
             --wait \
             ${{ env.IMAGE_NAME }} \
             oci://${{ secrets.ACR_URL }}/helm/${{ env.IMAGE_NAME }} --version ${{ inputs.IMAGE_TAG }} \
-            -f ${{ inputs.VALUES_FILE }} \
+            -f ./main/charts/${{ inputs.VALUES_FILE }} \
             --set image.tag=${{ inputs.IMAGE_TAG }}
 
     # --- PreProd Tests ---
